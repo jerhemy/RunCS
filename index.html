@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunCS: a C# scratchpad</title>
+<meta name="description" content="RunCS is a desktop scratchpad for C#. Type code, press Ctrl+Enter, read the output. No project to create.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314182B'/%3E%3Cpath d='M12 9l12 7-12 7z' fill='%232FA862'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F3F5FB;
+    --ink: #14182B;
+    --ink-soft: #4A5170;
+    --rule: #D5DCEE;
+    --margin: #E0456B;
+    --violet: #5A3FE0;
+    --run: #2FA862;
+    --screen: #1E1E1E;
+
+    --line: 2rem;            /* every block sits on a multiple of this, like writing on ruled paper */
+    --gutter: clamp(1.25rem, 6vw, 5.5rem);
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 400 1.125rem/var(--line) var(--display);
+    /* Ruled paper: a faint line every 2rem, and one red margin line down the left. */
+    background:
+      linear-gradient(to right, transparent calc(var(--gutter) - 1.25rem), var(--margin) calc(var(--gutter) - 1.25rem), var(--margin) calc(var(--gutter) - 1.25rem + 2px), transparent calc(var(--gutter) - 1.25rem + 2px)),
+      repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px), var(--rule) var(--line)),
+      var(--paper);
+    background-attachment: local;
+  }
+
+  a { color: var(--violet); text-underline-offset: 0.2em; }
+  a:focus-visible, .button:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+
+  .page {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+  }
+
+  /* ---------- Top bar ---------- */
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: var(--line);
+    height: calc(var(--line) * 3);
+  }
+  .name { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+  .top nav { display: flex; gap: 1.75rem; font-size: 1rem; }
+  .top nav a { color: var(--ink); }
+
+  /* ---------- Hero ---------- */
+  .hero { padding-top: calc(var(--line) * 2); }
+
+  h1 {
+    margin: 0;
+    font-weight: 800;
+    font-size: clamp(2.75rem, 8.2vw, 6.5rem);
+    line-height: calc(var(--line) * 3.5);
+    letter-spacing: -0.04em;
+  }
+  @media (max-width: 62rem) { h1 { line-height: calc(var(--line) * 2.5); } }
+  @media (max-width: 36rem) { h1 { line-height: calc(var(--line) * 1.75); } }
+
+  h1 .press { display: block; white-space: nowrap; }
+
+  /* The two keys are drawn as keys, because pressing them is the whole product. */
+  kbd {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 0.5em;
+    letter-spacing: 0;
+    display: inline-block;
+    vertical-align: 0.28em;
+    padding: 0.5em 0.8em 0.6em;
+    line-height: 1;
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 0.45em;
+    box-shadow: 0 0.3em 0 var(--ink);
+  }
+  h1 .plus { font-weight: 500; font-size: 0.5em; vertical-align: 0.3em; margin: 0 0.15em; color: var(--ink-soft); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    h1 kbd { animation: press 0.5s ease-out 0.9s both; }
+    h1 kbd + .plus + kbd { animation-delay: 1.15s; }
+  }
+  @keyframes press {
+    0%, 100% { transform: translateY(0); box-shadow: 0 0.3em 0 var(--ink); }
+    40% { transform: translateY(0.24em); box-shadow: 0 0.06em 0 var(--ink); }
+  }
+
+  .lede {
+    max-width: 38rem;
+    margin: var(--line) 0 0;
+    font-size: 1.375rem;
+    color: var(--ink-soft);
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; margin-top: var(--line); min-height: calc(var(--line) * 2); }
+
+  .button {
+    display: inline-block;
+    padding: 0 1.6rem;
+    font-weight: 700;
+    line-height: calc(var(--line) * 1.75);
+    color: #fff;
+    background: var(--ink);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    box-shadow: 0 0.3rem 0 var(--run);
+  }
+  .button:hover { background: #232a4a; }
+  .button:active { transform: translateY(0.2rem); box-shadow: 0 0.1rem 0 var(--run); }
+
+  .needs { font-size: 1rem; color: var(--ink-soft); }
+
+  /* ---------- Screenshots ---------- */
+  .shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--screen);
+    border: 2px solid var(--ink);
+    border-radius: 0.6rem;
+    box-shadow: 0.6rem 0.6rem 0 rgba(20, 24, 43, 0.14);
+  }
+  .hero .shot { margin-top: calc(var(--line) * 2); }
+
+  figure { margin: 0; }
+  figcaption { font-size: 0.95rem; color: var(--ink-soft); margin-top: calc(var(--line) / 2); line-height: calc(var(--line) * 0.75); }
+
+  /* ---------- Sections ---------- */
+  section { padding-top: calc(var(--line) * 4); }
+
+  h2 {
+    margin: 0 0 var(--line);
+    font-weight: 800;
+    font-size: clamp(1.9rem, 4vw, 2.75rem);
+    line-height: calc(var(--line) * 1.5);
+    letter-spacing: -0.03em;
+    max-width: 22em;
+  }
+
+  h3 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: var(--line);
+    letter-spacing: -0.015em;
+  }
+
+  p { margin: 0; max-width: 36rem; }
+  p + p { margin-top: var(--line); }
+
+  .feature {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: calc(var(--line) * 1.5);
+    align-items: start;
+    padding-top: calc(var(--line) * 2);
+  }
+  .feature:first-of-type { padding-top: 0; }
+  .feature h3 + p { margin-top: var(--line); }
+  .feature .narrow { max-width: 26rem; justify-self: start; }
+
+  /* A wide screenshot would be unreadable squeezed into a column, so it gets the full width under its text. */
+  .feature.wide { grid-template-columns: minmax(0, 1fr); gap: var(--line); }
+
+  @media (max-width: 56rem) {
+    .feature { grid-template-columns: minmax(0, 1fr); gap: var(--line); }
+  }
+
+  /* A script shown as code, on the same dark surface as the app. */
+  pre {
+    margin: 0;
+    padding: var(--line) 1.5rem;
+    overflow-x: auto;
+    font: 400 0.95rem/var(--line) var(--mono);
+    color: #D4D4D4;
+    background: var(--screen);
+    border: 2px solid var(--ink);
+    border-radius: 0.6rem;
+    box-shadow: 0.6rem 0.6rem 0 rgba(20, 24, 43, 0.14);
+  }
+  pre .d { color: #569CD6; }
+  pre .s { color: #CE9178; }
+  pre .t { color: #4EC9B0; }
+  pre .c { color: #6A9955; }
+
+  code { font-family: var(--mono); font-size: 0.9em; }
+
+  /* ---------- Keys table ---------- */
+  .keys { border-collapse: collapse; width: 100%; max-width: 44rem; }
+  .keys th, .keys td { text-align: left; padding: 0 1.5rem 0 0; height: var(--line); vertical-align: baseline; font-weight: 400; }
+  .keys th { width: 15rem; white-space: nowrap; }
+  .keys kbd { font-size: 0.8rem; vertical-align: 0.1em; padding: 0.3em 0.55em 0.35em; border-width: 1.5px; box-shadow: 0 0.18em 0 var(--ink); }
+  @media (max-width: 36rem) { .keys th { width: auto; } }
+
+  /* ---------- Get it ---------- */
+  .get ul { margin: 0; padding: 0; list-style: none; max-width: 40rem; }
+  .get li { padding-left: 1.5rem; position: relative; }
+  .get li::before { content: ""; position: absolute; left: 0; top: 0.8rem; width: 0.55rem; height: 0.55rem; background: var(--run); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+  .get .actions { margin-top: var(--line); }
+
+  footer {
+    margin-top: calc(var(--line) * 4);
+    padding-bottom: calc(var(--line) * 2);
+    font-size: 1rem;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="top">
+    <a class="name" href="#top">RunCS</a>
+    <nav aria-label="Sections">
+      <a href="#what">What it does</a>
+      <a href="#keys">Keys</a>
+      <a href="#get">Get it</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <h1>Write C#. <span class="press">Press <kbd>Ctrl</kbd><span class="plus">+</span><kbd>Enter</kbd></span></h1>
+      <p class="lede">RunCS is a desktop scratchpad for C#. Type some code, run it, and read the output beside it. There is no project to create and nothing to set up.</p>
+      <div class="actions">
+        <a class="button" href="https://github.com/jerhemy/RunCS/releases">Get RunCS</a>
+        <span class="needs">For Windows, Linux and macOS. Needs the .NET 10 SDK.</span>
+      </div>
+      <img class="shot" src="img/run.png" width="1100" height="700" alt="The RunCS window: a short C# script on the left that groups words by length, and its two lines of output on the right.">
+    </div>
+
+    <section id="what">
+      <h2>An editor that understands the code, and gets out of the way</h2>
+
+      <div class="feature wide">
+        <div>
+          <h3>Completions from the real compiler</h3>
+          <p>RunCS uses Roslyn, the C# compiler's own analysis engine. Start a word or type a dot and it lists what fits, with each entry's signature and documentation alongside.</p>
+          <p>Open a parenthesis to see a method's overloads, or rest the mouse on a name to see its type.</p>
+        </div>
+        <figure>
+          <img class="shot" src="img/intellisense.png" width="1100" height="352" alt="A completion list open after typing words.Mi, offering Min and MinBy, with the signature and summary of Min shown beside it.">
+        </figure>
+      </div>
+
+      <div class="feature">
+        <div>
+          <h3>Errors appear where you made them</h3>
+          <p>A mistake gets a red underline and a badge beside its line number as you type. Click either to read the message.</p>
+          <p>The output pane is kept for what your program prints.</p>
+        </div>
+        <figure>
+          <img class="shot" src="img/errors.png" width="720" height="330" alt="Line 11 assigns a string to an int. It has a red badge in the margin and a red underline, and a popup reads: CS0029, cannot implicitly convert type string to int.">
+        </figure>
+      </div>
+
+      <div class="feature">
+        <div>
+          <h3>NuGet packages in one line</h3>
+          <p>Search nuget.org from inside RunCS and double-click a result. It adds a single <code>#:package</code> line to the top of your script, and completions for the package follow once it has downloaded.</p>
+          <p>You can also add your own GitHub Packages feed, or paste a link to a <code>.nupkg</code> file.</p>
+        </div>
+        <pre><span class="d">#:package</span> Humanizer@2.14.1
+
+<span class="d">using</span> Humanizer;
+
+<span class="t">Console</span>.WriteLine(<span class="s">"three_word_name"</span>.Humanize());
+<span class="t">Console</span>.WriteLine(<span class="t">TimeSpan</span>.FromMinutes(90).Humanize());</pre>
+      </div>
+
+      <div class="feature">
+        <div>
+          <h3>Settings that travel with the script</h3>
+          <p>Nullable checks, unsafe code, the language version, Native AOT, console or web: each script has its own build settings.</p>
+          <p>They are saved inside the <code>.cs</code> file, so the script behaves the same wherever it goes. RunCS keeps those lines out of the editor, so you can't delete them by accident.</p>
+        </div>
+        <figure class="narrow">
+          <img class="shot" src="img/settings.png" width="520" height="620" alt="The Script settings window, with checkboxes for Native AOT, nullable reference types, implicit usings, unsafe code and warnings as errors, and choices for language version and project type.">
+        </figure>
+      </div>
+
+      <div class="feature">
+        <div>
+          <h3>Plain files, plain .NET</h3>
+          <p>Every tab is an ordinary <code>.cs</code> file, and RunCS runs it with <code>dotnet run</code>. A script you write here also runs from a terminal, and a script from anywhere else opens here.</p>
+          <p>Scripts run with your own permissions. There is no sandbox, so treat code you didn't write the way you would in any terminal.</p>
+        </div>
+        <pre><span class="c"># the same file, without RunCS</span>
+dotnet run scratch.cs</pre>
+      </div>
+    </section>
+
+    <section id="keys">
+      <h2>Keys</h2>
+      <table class="keys">
+        <tbody>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Enter</kbd> or <kbd>F5</kbd></th><td>Run the current tab</td></tr>
+          <tr><th scope="row"><kbd>Shift</kbd> <kbd>F5</kbd></th><td>Stop a running script</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Space</kbd></th><td>Show completions</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>T</kbd></th><td>New tab</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>W</kbd></th><td>Close tab</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Tab</kbd></th><td>Next tab</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>O</kbd></th><td>Open a script</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>S</kbd></th><td>Save the script</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>P</kbd></th><td>Packages</td></tr>
+          <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>,</kbd></th><td>Script settings</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="get" class="get">
+      <h2>Get it</h2>
+      <ul>
+        <li>Install the <a href="https://dotnet.microsoft.com/download">.NET 10 SDK</a> first. RunCS uses it to build and run your scripts.</li>
+        <li>Download the build for your system from the releases page: Windows, Linux or macOS.</li>
+        <li>Unpack it and start RunCS. Your first tab is ready to type in.</li>
+      </ul>
+      <div class="actions">
+        <a class="button" href="https://github.com/jerhemy/RunCS/releases">Open the releases page</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>RunCS</span>
+    <a href="https://github.com/jerhemy/RunCS">github.com/jerhemy/RunCS</a>
+  </footer>
+
+</div>
+</body>
+</html>
