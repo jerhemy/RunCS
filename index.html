@@ -250,11 +250,22 @@
         <a class="button" href="https://github.com/jerhemy/RunCS/releases">Get RunCS</a>
         <span class="needs">For Windows, Linux and macOS. Needs the .NET 10 SDK.</span>
       </div>
-      <img class="shot" src="img/run.png" width="1100" height="700" alt="The RunCS window: a short C# script on the left that groups words by length, and its two lines of output on the right.">
+      <img class="shot" src="img/run.png" width="1100" height="698" alt="The RunCS window: a short C# script on the left that groups words by length, and its output on the right. The last line of the script is a bare expression, and its value, 5, appears in the output labelled L10.">
     </div>
 
     <section id="what">
       <h2>An editor that understands the code, and gets out of the way</h2>
+
+      <div class="feature wide">
+        <div>
+          <h3>See values without writing Console.WriteLine</h3>
+          <p>A line that is just an expression, such as <code>Add(2, 3);</code>, shows its value in the output, labelled with the line it came from.</p>
+          <p>For anything deeper, click beside a line number to add a log point. The next run reports what that line produced: a variable's new value, what a method returned, whether an <code>if</code> was true, or the arguments of each call. Your code stays as it is.</p>
+        </div>
+        <figure>
+          <img class="shot" src="img/logpoints.png" width="1100" height="540" alt="A script with blue diamonds beside five line numbers. The output lists what each of those lines produced, such as the arguments of a method call, initialDistance &lt;= 0 is false, return 40, and total = 2, 6 and 12 from inside a loop, each labelled with its line number.">
+        </figure>
+      </div>
 
       <div class="feature wide">
         <div>
@@ -274,7 +285,7 @@
           <p>The output pane is kept for what your program prints.</p>
         </div>
         <figure>
-          <img class="shot" src="img/errors.png" width="720" height="330" alt="Line 11 assigns a string to an int. It has a red badge in the margin and a red underline, and a popup reads: CS0029, cannot implicitly convert type string to int.">
+          <img class="shot" src="img/errors.png" width="720" height="330" alt="Line 12 assigns a string to an int. It has a red badge in the margin and a red underline, and a popup reads: CS0029, cannot implicitly convert type string to int.">
         </figure>
       </div>
 
@@ -299,7 +310,7 @@
           <p>They are saved inside the <code>.cs</code> file, so the script behaves the same wherever it goes. RunCS keeps those lines out of the editor, so you can't delete them by accident.</p>
         </div>
         <figure class="narrow">
-          <img class="shot" src="img/settings.png" width="520" height="620" alt="The Script settings window, with checkboxes for Native AOT, nullable reference types, implicit usings, unsafe code and warnings as errors, and choices for language version and project type.">
+          <img class="shot" src="img/settings.png" width="520" height="721" alt="The Script settings window, with checkboxes for Native AOT, nullable reference types, implicit usings, unsafe code and warnings as errors, choices for language version and project type, and a switch for showing the value of top-level expressions.">
         </figure>
       </div>
 
@@ -320,6 +331,7 @@ dotnet run scratch.cs</pre>
         <tbody>
           <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Enter</kbd> or <kbd>F5</kbd></th><td>Run the current tab</td></tr>
           <tr><th scope="row"><kbd>Shift</kbd> <kbd>F5</kbd></th><td>Stop a running script</td></tr>
+          <tr><th scope="row"><kbd>F9</kbd></th><td>Add or remove a log point on the current line</td></tr>
           <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Space</kbd></th><td>Show completions</td></tr>
           <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>T</kbd></th><td>New tab</td></tr>
           <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>W</kbd></th><td>Close tab</td></tr>
